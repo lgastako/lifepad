@@ -1,66 +1,17 @@
 (ns lifepad.core
-  (:require [launchtone.core :as pad]
+  (:require [its.log :as log]
+            [launchtone.core :as lp]
             [launchtone.utils :as ltu]
-            [lifepad.tools :as tools]
-            [overtone.config.log :as log]))
+            [lifepad.boards :refer :all]
+            [lifepad.tools :as tools]))
 
 (log/set-level! :debug)
 
-(def blank-board
-  [[:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]])
-
-(def glider-board
-  [[:_ :_ :_ :_ :_ :_ :y :_]
-   [:_ :_ :_ :_ :_ :y :_ :_]
-   [:_ :_ :_ :_ :_ :y :y :y]
-   [:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]])
-
-(def p2-blinker-board
-  [[:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :y :y :y :_ :_ :_ :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :_ :_ :_ :y :y :y :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]])
-
-(def block-board
-  [[:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :y :y :_ :_ :y :y :_]
-   [:_ :y :y :_ :_ :y :y :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :y :y :_ :_ :y :y :_]
-   [:_ :y :y :_ :_ :y :y :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]])
-
-(def lets-see-1
-  [[:_ :_ :_ :_ :_ :_ :_ :_]
-   [:_ :y :y :_ :_ :y :y :_]
-   [:_ :y :y :_ :_ :y :y :_]
-   [:_ :_ :_ :y :y :_ :_ :_]
-   [:_ :_ :_ :y :y :_ :_ :_]
-   [:_ :y :y :_ :_ :y :y :_]
-   [:_ :y :y :_ :_ :y :y :_]
-   [:_ :_ :_ :_ :_ :_ :_ :_]])
-
-(defmacro dbg[x] `(let [x# ~x] (println "dbg:" '~x "=" x#) x#))
+;; (defmacro dbg[x] `(let [x# ~x] (println "dbg:" '~x "=" x#) x#))
 
 (defn valat [board [y x]]
-  (assert (<= 0 x (count board)))
-  (assert (<= 0 y (count (get board 0))))
+  ;; (assert (<= 0 x (count board)))
+  ;; (assert (<= 0 y (count (get board 0))))
   (get (get board y) x))
 
 (defn dead? [board spot]
@@ -100,22 +51,29 @@
 (defn nextval [board spot]
   (if (spawn? board spot) :y :_))
 
-(defn iterate-board [board]
-  (tools/next-board-by-xy board nextval))
+(defn evolve [board]
+  (tools/next-board-by-f board nextval))
 
-(defn iterate-boards
-  ([board n]
-     (iterate-boards board n identity))
-  ([board n f]
-     (if (<= n 0)
-       board
-       (let [board' (iterate-board board)
-             board'' (f board')]
-         (recur board'' (dec n) f)))))
+(defn paced-set-board! [app ms board]
+  (lp/set-board! app board)
+  (Thread/sleep ms)
+  (evolve board))
 
-(defn piterate [board n]
-  (iterate-boards board n #(do (pprint %) %)))
+(defn diterate! [board ms n]
+  (let [app (lp/make-app)
+        f (partial paced-set-board! app ms)]
+    (iterate f board)))
 
-(defn -main []
-  (-> (pad/make-app)
-      (pad/set-board! glider-board)))
+(defn fp! [board ms]
+  (let [app (lp/make-app)
+        f (partial paced-set-board! app ms)]
+    (loop [board board]
+      (f board)
+      (let [board' (evolve board)]
+        (when (not= board board')
+          (recur board'))))))
+
+(defn -main [& _]
+  (log/debug :-main)
+;;  (take 100 (diterate! glider-board 100))
+  (fp! (rand-board) 100))

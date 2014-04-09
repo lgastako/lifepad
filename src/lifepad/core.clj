@@ -76,4 +76,5 @@
 (defn -main [& _]
   (log/debug :-main)
 ;;  (take 100 (diterate! glider-board 100))
-  (fp! (rand-board) 100))
+  (fp! (rand-board) 300)
+  (System/exit 0))

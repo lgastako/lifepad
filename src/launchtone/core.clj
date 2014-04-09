@@ -36,7 +36,7 @@
 
 (defn buffering-on?
   [app]
-  (not= (app :buffer) buffer-none))
+  (not= (app :buffer) buf/buffer-none))
 
 ;; To make this work with subwatch I would need to modify subwatch to also pass
 ;; in the full old/new values instead of just the sub parts, right?
@@ -155,4 +155,3 @@
 (defn off!
   ([app]
      (set-board! app board/empty-board)))
-

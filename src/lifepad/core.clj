@@ -59,7 +59,7 @@
   (Thread/sleep ms)
   (evolve board))
 
-(defn diterate! [board ms n]
+(defn diterate! [board ms]
   (let [app (lp/make-app)
         f (partial paced-set-board! app ms)]
     (iterate f board)))

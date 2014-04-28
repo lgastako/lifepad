@@ -6,5 +6,5 @@
   :main ^:skip-aot lifepad.core
   :jvm-opts ^:replace ["-XX:-OmitStackTraceInFastThrow"]
   :dependencies [[org.clojure/clojure "1.5.1"]
-                 [its-log "0.1.0-SNAPSHOT"]
+                 [its-log "0.2.1"]
                  [launchtone "0.1.0"]])

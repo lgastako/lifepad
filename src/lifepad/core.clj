@@ -53,7 +53,6 @@
 (defn init [receiver & {:keys [board speed]
                         :or {board boards/glider
                              speed 250}}]
-  (log/debug :init)
   (let [app (atom {:receiver receiver
                    :board board
                    :speed speed
@@ -61,35 +60,23 @@
                    :stopped false
                    :events []})
         changes (chan)]
-    (log/debug :step 1)
     (board/render-board! receiver board)
-    (log/debug :step 2)
     (board/auto-render receiver :auto app [:board])
-    (log/debug :step 3)
     (go (while (not (:stopped @app))
-          (log/debug :top-of-loop)
           (alt! (timeout (:speed @app)) (when (not (:paused @app))
-                                          (log/debug :rendering!)
                                           (try
                                             (let [board' (evolve (:board @app))]
                                               (swap! app assoc :board board'))
                                             (catch Exception ex
                                               (log/debug :rendering-exception ex))))
-                changes (log/debug :change))
-          (log/debug :bottom-of-loop))
-        (log/debug :go :done))
-    (log/debug :step 4)
+                changes (log/debug :change))))
     (add-watch app :pauser (fn [k r o n]
-                             (log/debug :pauser :watch)
                              (when (or (not= (:speed o) (:speed n))
                                        (not= (:paused o) (:paused n))
                                        (not= (:stopped o) (:stopped n)))
                                (put! changes :change))))
-    (log/debug :step 5)
     (buttons/on-button :events #(swap! app update-in [:events] conj %))
-    (log/debug :step 6)
     (buttons/on-button :press #(swap! app update-in [:board] board/assoc-at (:spot %) :y))
-    (log/debug :step 7)
     app))
 
 (defn pause [app] (swap! app assoc :paused true))

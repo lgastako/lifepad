@@ -57,8 +57,7 @@
                    :board board
                    :speed speed
                    :paused false
-                   :stopped false
-                   :events []})
+                   :stopped false})
         changes (chan)]
     (board/render-board! receiver board)
     (board/auto-render receiver :auto app [:board])
@@ -75,13 +74,12 @@
                                        (not= (:paused o) (:paused n))
                                        (not= (:stopped o) (:stopped n)))
                                (put! changes :change))))
-    (buttons/on-button :events #(swap! app update-in [:events] conj %))
     (buttons/on-button :press #(swap! app update-in [:board] board/assoc-at (:spot %) :y))
     app))
 
 (defn pause [app] (swap! app assoc :paused true))
 (defn unpause [app] (swap! app assoc :paused false))
-(defn toggle-pause [app] (swap! app update-in :paused not))
+(defn toggle [app] (swap! app update-in [:paused] not))
 (defn stop [app] (swap! app assoc :stopped true))
 (defn set-speed [app speed] (swap! app assoc :speed speed))
 (defn set-board [app board] (swap! app assoc :board board))

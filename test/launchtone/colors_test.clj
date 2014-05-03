@@ -1,17 +1,13 @@
 (ns launchtone.colors-test
-  (:require [clojure.test :refer :all]
-            [launchtone.colors :refer :all]
-            [lifepad.boards :refer :all]))
+  (:use [clojure.test :refer :all]
+        [launchtone.colors :only [board->colors]]))
 
 (deftest test-board->colors
-  (is (= [[nil nil nil nil nil nil nil nil]
-          [nil nil nil nil nil [3 3] nil nil]
-          [nil nil nil nil [3 3] nil nil nil]
-          [nil nil nil nil [3 3] [3 3] [3 3] nil]
-          [nil nil nil nil nil nil nil nil]
-          [nil nil nil nil nil nil nil nil]
-          [nil nil nil nil nil nil nil nil]
-          [nil nil nil nil nil nil nil nil]]
-         (board->colors glider-board))))
+  (testing "Color selection of board->colors"
+    (is (= [[[0 0] [3 0]]
+            [[0 3] [0 0]]]
+           (board->colors [[:e :r]
+                           [:g :e]])))))
 
-(run-tests)
+;;(run-tests)
+

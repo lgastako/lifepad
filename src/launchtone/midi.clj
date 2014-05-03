@@ -1,6 +1,14 @@
 (ns launchtone.midi
   (:import (javax.sound.midi ShortMessage SysexMessage)))
 
+(defn ubyte [val]
+  (if (>= val 128)
+    (byte (- val 256))
+    (byte val)))
+
+(def ^:private ->ba
+  (comp byte-array (partial map (comp ubyte int))))
+
 (defn- send-msg! [sink msg]
   (println :send-msg! {:sink sink :msg msg})
   (.send (:receiver sink) msg -1))
@@ -33,14 +41,6 @@
         ;; halp how do I java
         size (count bytea)]
     (SysexMessage. bytea size)))
-
-(defn ubyte [val]
-  (if (>= val 128)
-    (byte (- val 256))
-    (byte val)))
-
-(def ^:private ->ba
-  (comp byte-array (partial map (comp ubyte int))))
 
 (defn send-sysex-msg! [sink bytes]
   (println :send-sysex-msg! {:bytes bytes})

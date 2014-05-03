@@ -25,4 +25,4 @@
 ;;           (= 1 num-launchpads) (only-transmitter-and-receiver)
 ;;           :else (choose-transmitter-and-receiver))))
 
-(def select-transmitter-and-receiver only-transmitter-and-receiver)
+(def select only-transmitter-and-receiver)

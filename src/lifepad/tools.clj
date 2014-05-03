@@ -6,11 +6,9 @@
                 (f board [x y]))))))
 
 (defn fixed-point
-  ([board]
-     (fixed-point board identity))
   ([board f]
      (let [gen1 (next-board-by-f board f)
            gen2 (next-board-by-f gen1 f)]
        (if (= gen1 gen2)
          gen1
-         (fixed-point gen2 f)))))
+         (fixed-point gen1 f)))))

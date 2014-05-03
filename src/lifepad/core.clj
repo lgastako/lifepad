@@ -1,30 +1,29 @@
 (ns lifepad.core
-  (:require [its.log :as log]
+  (:require [clojure.core.async :refer [chan go alt! timeout put!]]
+            [its.log :as log]
+            [its.bus :as bus]
+            [launchtone.board :as board]
+            [launchtone.buttons :as buttons]
             [launchtone.core :as lp]
+            [launchtone.devices :as devices]
             [launchtone.utils :as ltu]
-            [lifepad.boards :refer :all]
+            [lifepad.boards :as boards]
             [lifepad.tools :as tools]))
 
-(log/set-level! :debug)
-
-;; (defmacro dbg[x] `(let [x# ~x] (println "dbg:" '~x "=" x#) x#))
-
 (defn valat [board [y x]]
-  ;; (assert (<= 0 x (count board)))
-  ;; (assert (<= 0 y (count (get board 0))))
+  (assert (<= 0 x (count board)))
+  (assert (<= 0 y (count (get board 0))))
   (get (get board y) x))
 
-(defn dead? [board spot]
-  (= :_ (valat board spot)))
+(defn dead? [board spot]  (= :_ (valat board spot)))
 
 (def alive? (comp not dead?))
+
+(defn occupied? [board spot] (not= :_ (valat board spot)))
 
 (defn valid-spot? [[x y]]
   (and (<= 0 x 7)
        (<= 0 y 7)))
-
-(defn occupied? [board spot]
-  (not= :_ (valat board spot)))
 
 (defn neighbors [board [x y]]
   (let [ncells [[(inc x) (inc y)]
@@ -35,10 +34,7 @@
                 [x (dec y)]
                 [(inc x) (dec y)]
                 [(dec x) (inc y)]]
-        ;; _ (when (and (= x 0) (= y 0)) (println "ncells: " ncells))
-        ncells (filter valid-spot? ncells)
-        ;; _ (when (and (= x 0) (= y 0)) (println "valid: " ncells))
-        ]
+        ncells (filter valid-spot? ncells)]
     (apply + (for [spot ncells] (if (occupied? board spot) 1 0)))))
 
 (defn spawn? [board spot]
@@ -54,27 +50,52 @@
 (defn evolve [board]
   (tools/next-board-by-f board nextval))
 
-(defn paced-set-board! [app ms board]
-  (lp/set-board! app board)
-  (Thread/sleep ms)
-  (evolve board))
+(defn init [receiver & {:keys [board speed]
+                        :or {board boards/glider
+                             speed 250}}]
+  (let [app (atom {:receiver receiver
+                   :board board
+                   :speed speed
+                   :paused true
+                   :stopped false
+                   :events []})
+        changes (chan)]
+    (board/render-board! receiver board)
+    (board/auto-render receiver :auto app [:board])
+    (go (while (not (:stopped @app))
+          (alt! (timeout (:speed @app)) (when (not (:paused @app))
+                                          (let [board' (evolve :board app)]
+                                            (swap! app assoc :board board')))
+                (changes) (log/debug :change))
+          (log/debug :go :done)))
+    (add-watch app :pauser (fn [k r o n]
+                             (when (or (not= (:speed o) (:speed n))
+                                       (not= (:paused o) (:paused n))
+                                       (not= (:stopped o) (:stopped n)))
+                               (put! changes :change))))
+    (buttons/on-button :events #(swap! app update-in [:events] conj %))
+    (buttons/on-button :press #(swap! app update-in [:board] board/assoc-at (:spot %) :y))
+    app))
 
-(defn diterate! [board ms]
-  (let [app (lp/make-app)
-        f (partial paced-set-board! app ms)]
-    (iterate f board)))
+(defn pause [app] (swap! app assoc :paused true))
+(defn unpause [app] (swap! app assoc :paused false))
+(defn toggle-pause [app] (swap! app update-in :paused not))
+(defn stop [app] (swap! app assoc :stopped true))
 
-(defn fp! [board ms]
-  (let [app (lp/make-app)
-        f (partial paced-set-board! app ms)]
-    (loop [board board]
-      (f board)
-      (let [board' (evolve board)]
-        (when (not= board board')
-          (recur board'))))))
+(defn- make-app []
+  (let [[_ receiver] (devices/select)]
+    (init receiver)))
 
-(defn -main [& _]
-  (log/debug :-main)
-;;  (take 100 (diterate! glider-board 100))
-  (fp! (rand-board) 300)
-  (System/exit 0))
+(defn -main []
+  (log/set-level! :warn)
+  (bus/replace-with-printer!)
+  (let [app (make-app)]
+    (println "Press enter or return to quit.")
+    (read-line)
+    (stop app)
+    app))
+
+(defn- develop []
+  (log/set-level! :debug)
+  (bus/replace-with-printer!)
+  (make-app))

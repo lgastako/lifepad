@@ -74,7 +74,9 @@
                                        (not= (:paused o) (:paused n))
                                        (not= (:stopped o) (:stopped n)))
                                (put! changes :change))))
-    (buttons/on-button :press #(swap! app update-in [:board] board/assoc-at (:spot %) :y))
+    (buttons/on-button :press #(let [old (valat (:board @app) (:spot %))
+                                     new (if (= old :y) :_ :y)]
+                                 (swap! app update-in [:board] board/assoc-at (:spot %) new)))
     app))
 
 (defn pause [app] (swap! app assoc :paused true))

@@ -29,6 +29,5 @@
 
 (defn auto-render [receiver key state path]
   (add-watch state key (fn [k r o n]
-                         (log/debug :auto-render {:n n})
                          (when (not= (:board o) (:board n))
                            (render-board! receiver (:board n))))))

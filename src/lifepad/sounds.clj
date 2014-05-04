@@ -1,4 +1,4 @@
-(ns launchtone.synths
+(ns lifepad.sounds
   (:require [overtone.synth.sts :refer [prophet]]))
 
 (defn ex1 []

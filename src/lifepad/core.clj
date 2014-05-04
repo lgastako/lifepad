@@ -135,23 +135,12 @@
                                        (not= (:stopped o) (:stopped n)))
                                (put! changes :change))))
     (add-watch app :triggerer (fn [k r o n]
-                                (log/debug :triggerer :firing)
                                 (when-let [triggers (:triggers @app)]
-                                  (log/debug :triggerer :num-triggered-spots (count triggers))
                                   (when-let [nas (new-actives o n)]
-                                    (log/debug :triggerer :nas nas)
-                                    (doall
-                                     (for [spot nas]
-                                       (do
-                                         (log/debug :triggerer :for-spot spot)
-                                         (log/debug :triggerer :triggers (triggers spot))
-                                         (when-let [spot-triggers (triggers spot)]
-                                           (log/debug :num-spot-triggers (count spot-triggers))
-                                           (doall
-                                            (for [[_ trigger] spot-triggers]
-                                              (do
-                                                (log/debug :trigger :triggering {:trigger trigger})
-                                                (trigger))))))))))))
+                                    (doall (for [spot nas]
+                                             (when-let [spot-triggers (triggers spot)]
+                                               (doall (for [[_ trigger] spot-triggers]
+                                                        (trigger))))))))))
     (buttons/on-button :press #(let [old (valat (:board @app) (:spot %))
                                      new (if (= old :y) :_ :y)]
                                  (swap! app update-in [:board] board/assoc-at (:spot %) new)))
@@ -182,3 +171,7 @@
 ;; delete me
 (defn tmp1 [app]
   (add-trigger app [0 0] :ding sounds/ding))
+
+(defn tmp2 [app]
+  (doall (for [spot board/all-spots]
+           (add-trigger app spot :ding sounds/ding))))

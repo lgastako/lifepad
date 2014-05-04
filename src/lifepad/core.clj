@@ -1,5 +1,5 @@
 (ns lifepad.core
-  (:require [clojure.core.async :refer [chan go alt! timeout put!]]
+  (:require [clojure.core.async :refer [chan go alts! timeout put!]]
             [its.log :as log]
             [its.bus :as bus]
             [launchtone.board :as board]
@@ -58,6 +58,15 @@
 (defn set-board [app board] (swap! app assoc :board board))
 (defn clear [app] (set-board app boards/blank))
 
+(defn inc-by [n] #(+ % n))
+(defn dec-by [n] #(- % n))
+
+(def ^:private speed-delta 50)
+(defn faster [app] (swap! app update-in [:speed]
+                          (dec-by speed-delta)))
+(defn slower [app] (swap! app update-in [:speed]
+                          (max 0 (inc-by speed-delta))))
+
 (defn dumpboard [app]
   (pprint (:board @app)))
 
@@ -81,13 +90,10 @@
     (board/render-board! receiver board)
     (board/auto-render receiver :auto app [:board])
     (go (while (not (:stopped @app))
-          (alt! (timeout (:speed @app)) (when (not (:paused @app))
-                                          (try
-                                            (let [board' (evolve (:board @app))]
-                                              (swap! app assoc :board board'))
-                                            (catch Exception ex
-                                              (log/debug :rendering-exception ex))))
-                changes (log/debug :change))))
+          (let [[v c] (alts! [(timeout (:speed @app)) changes])]
+            (when (and (not= changes c)
+                       (not :paused @app))
+              (swap! app assoc :board (evolve (:board @app)))))))
     (add-watch app :pauser (fn [k r o n]
                              (when (or (not= (:speed o) (:speed n))
                                        (not= (:paused o) (:paused n))
@@ -98,6 +104,8 @@
                                  (swap! app update-in [:board] board/assoc-at (:spot %) new)))
     (buttons/on-control :pause-button #(when (= :mixer (:control %)) (toggle app)))
     (buttons/on-control :clear-button #(when (= :session (:control %)) (clear app)))
+    ;; (buttons/on-control :faster-button #(when (= :up (:control %)) (faster app)))
+    (buttons/on-control :slower-button #(when (= :down (:control %)) (slower app)))
     app))
 
 (defn- make-app []
@@ -114,6 +122,6 @@
     app))
 
 (defn- develop []
-  (log/set-level! :warn)
+  (log/set-level! :debug)
   (bus/replace-with-printer!)
   (make-app))

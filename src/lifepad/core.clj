@@ -87,6 +87,17 @@
 (defn set-board [app board] (swap! app assoc :board board))
 (defn clear [app] (set-board app boards/blank))
 
+(defn dumpboard [app]
+  (pprint (:board @app)))
+
+(def ^:private captured (atom nil))
+
+(defn capture [app]
+  (reset! captured (:board @app)))
+
+(defn restore [app]
+  (set-board app @captured))
+
 (defn- make-app []
   (let [[_ receiver] (devices/select)]
     (init receiver)))

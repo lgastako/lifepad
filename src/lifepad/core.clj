@@ -62,6 +62,16 @@
 (defn set-board [app board] (swap! app assoc :board board))
 (defn clear [app] (set-board app boards/blank))
 
+(defn select-board [app f]
+  (let [boards (:boards @app)
+        index (mod (f (:index @app)) (count boards))]
+    (swap! app assoc
+           :board (nth boards index)
+           :index index)))
+
+(defn next-board [app] (select-board app inc))
+(defn prev-board [app] (select-board app dec))
+
 (defn inc-by [n] #(+ % n))
 (defn dec-by [n] #(- % n))
 
@@ -82,11 +92,14 @@
 (defn restore [app]
   (set-board app @captured))
 
-(defn init [receiver & {:keys [board speed]
+(defn init [receiver & {:keys [board boards speed]
                         :or {board boards/glider
+                             boards (vec boards/all)
                              speed 250}}]
   (let [app (atom {:receiver receiver
                    :board board
+                   :boards boards
+                   :index 0
                    :speed speed
                    :paused false
                    :stopped false})
@@ -108,6 +121,10 @@
                                  (swap! app update-in [:board] board/assoc-at (:spot %) new)))
     (buttons/on-control :pause-button #(when (= :mixer (:control %)) (toggle app)))
     (buttons/on-control :clear-button #(when (= :session (:control %)) (clear app)))
+
+    (buttons/on-control :prev-board #(when (= :left (:control %)) (prev-board app)))
+    (buttons/on-control :next-board #(when (= :right (:control %)) (next-board app)))
+
     ;; (buttons/on-control :faster-button #(when (= :up (:control %)) (faster app)))
     ;; (buttons/on-control :slower-button #(when (= :down (:control %)) (slower app)))
     app))

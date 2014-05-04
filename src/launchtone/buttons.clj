@@ -13,7 +13,6 @@
                111 :mixer})
 
 (defn- button-handler [f event-type key]
-  (log/debug :make-handler {:event-type event-type})
   (fn [e]
     (let [note (:note e)
           velocity (:velocity e)
@@ -27,7 +26,6 @@
           :key key}))))
 
 (defn- control-handler [f event-type key]
-  (log/debug :control-handler {:event-type event-type})
   (fn [e]
     (let [note (:note e)
           velocity (:velocity e)]
@@ -42,13 +40,11 @@
             :key key})))))
 
 (defn on-button-down [key f]
-  (log/debug :on-button-down {:key key})
   (otl/on-event [:midi :note-on]
                 (button-handler f :down key)
                 key))
 
 (defn on-button-up [key f]
-  (log/debug :on-button-up {:key key})
   (otl/on-event [:midi :note-off]
                 (button-handler f :up key)
                 key))

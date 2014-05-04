@@ -1,5 +1,6 @@
 (ns lifepad.core
   (:require [clojure.core.async :refer [chan go alts! timeout put!]]
+            [clojure.pprint :refer [pprint]]
             [its.log :as log]
             [its.bus :as bus]
             [launchtone.board :as board]
@@ -9,6 +10,9 @@
             [launchtone.utils :as ltu]
             [lifepad.boards :as boards]
             [lifepad.tools :as tools]))
+
+;; To capture all logging in your REPL:
+;; (alter-var-root #'*out* (constantly *out*))
 
 (defn valat [board [y x]]
   (assert (<= 0 x (count board)))
@@ -92,7 +96,7 @@
     (go (while (not (:stopped @app))
           (let [[v c] (alts! [(timeout (:speed @app)) changes])]
             (when (and (not= changes c)
-                       (not :paused @app))
+                       (not (:paused @app)))
               (swap! app assoc :board (evolve (:board @app)))))))
     (add-watch app :pauser (fn [k r o n]
                              (when (or (not= (:speed o) (:speed n))
@@ -105,7 +109,7 @@
     (buttons/on-control :pause-button #(when (= :mixer (:control %)) (toggle app)))
     (buttons/on-control :clear-button #(when (= :session (:control %)) (clear app)))
     ;; (buttons/on-control :faster-button #(when (= :up (:control %)) (faster app)))
-    (buttons/on-control :slower-button #(when (= :down (:control %)) (slower app)))
+    ;; (buttons/on-control :slower-button #(when (= :down (:control %)) (slower app)))
     app))
 
 (defn- make-app []

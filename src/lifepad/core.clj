@@ -10,7 +10,10 @@
             [launchtone.utils :as ltu]
             [lifepad.boards :as boards]
             [lifepad.sounds :as sounds]
-            [lifepad.tools :as tools]))
+            [lifepad.tools :as tools]
+            [overtone.live :as otl]
+            [overtone.inst.synth :as synths]
+            [overtone.inst.drum :as drums]))
 
 ;; To capture all logging in your REPL:
 ;; (alter-var-root #'*out* (constantly *out*))
@@ -169,9 +172,103 @@
   (init))
 
 ;; delete me
-(defn tmp1 [app]
-  (add-trigger app [0 0] :ding sounds/ding))
+(defn tmp1 []
+  (let [app (develop)]
+    (add-trigger app [0 0] :ding sounds/ding)
+    app))
 
-(defn tmp2 [app]
-  (doall (for [spot board/all-spots]
-           (add-trigger app spot :ding sounds/ding))))
+(defn tmp2 []
+  (let [app (develop)]
+    (doall (for [spot board/all-spots]
+             (add-trigger app spot :ding sounds/ding)))
+    app))
+
+(defn tmp3 []
+  (let [app (develop)]
+    (add-trigger app [4 4] :open-hat drums/open-hat)
+    (add-trigger app [4 5] :closed-hat drums/closed-hat)
+    (add-trigger app [5 4] :hat-demo drums/hat-demo)
+    (add-trigger app [5 5] :soft-hat drums/soft-hat)
+    (add-trigger app [3 4] :dance-kick drums/dance-kick)
+    (add-trigger app [4 3] :snare drums/snare)
+    (add-trigger app [4 6] :tone-snare drums/tone-snare)
+    (add-trigger app [6 4] :noise-snare drums/noise-snare)
+    (add-trigger app [5 6] :clap drums/clap)
+    (add-trigger app [6 5] :haziti-clap drums/haziti-clap)
+    app))
+
+(defn tmp4 []
+  (let [app (develop)]
+    ;; (add-trigger app [0 0] )
+    ;; (add-trigger app [0 1] )
+    ;; (add-trigger app [0 2] )
+    ;; (add-trigger app [0 3] )
+    ;; (add-trigger app [0 4] )
+    ;; (add-trigger app [0 5] )
+    ;; (add-trigger app [0 6] )
+    ;; (add-trigger app [0 7] )
+
+    ;; (add-trigger app [1 0] )
+    ;; (add-trigger app [1 1] )
+    ;; (add-trigger app [1 2] )
+    ;; (add-trigger app [1 3] )
+    ;; (add-trigger app [1 4] )
+    ;; (add-trigger app [1 5] )
+    ;; (add-trigger app [1 6] )
+    ;; (add-trigger app [1 7] )
+
+    ;; (add-trigger app [2 0] )
+    ;; (add-trigger app [2 1] )
+    ;; (add-trigger app [2 2] )
+    (add-trigger app [2 3] :hat3 drums/hat3)
+    (add-trigger app [2 4] :snare2 drums/snare2)
+    ;; (add-trigger app [2 5] )
+    ;; (add-trigger app [2 6] )
+    ;; (add-trigger app [2 7] )
+
+    ;; (add-trigger app [3 0] )
+    ;; (add-trigger app [3 1] )
+    ;; (add-trigger app [3 2] )
+    (add-trigger app [3 3] :tom drums/tom)
+    (add-trigger app [3 4] :dance-kick drums/dance-kick)
+    (add-trigger app [3 5] :ks1 synths/ks1)
+    ;; (add-trigger app [3 6] )
+    ;; (add-trigger app [3 7] )
+
+    ;; (add-trigger app [4 0] )
+    ;; (add-trigger app [4 1] )
+    ;; (add-trigger app [4 2] )
+    (add-trigger app [4 3] :snare drums/snare)
+    (add-trigger app [4 4] :open-hat drums/open-hat)
+    (add-trigger app [4 5] :closed-hat drums/closed-hat)
+    (add-trigger app [4 6] :tone-snare drums/tone-snare)
+    ;; (add-trigger app [4 7] )
+
+    ;; (add-trigger app [5 0] )
+    ;; (add-trigger app [5 1] )
+    (add-trigger app [5 2] :bass synths/bass)
+    (add-trigger app [5 3] :rise-fall-pad synths/rise-fall-pad)
+    (add-trigger app [5 4] :hat-demo drums/hat-demo)
+    (add-trigger app [5 5] :soft-hat drums/soft-hat)
+    (add-trigger app [5 6] :clap drums/clap)
+    ;; (add-trigger app [5 7] )
+
+    ;; (add-trigger app [6 0] )
+    ;; (add-trigger app [6 1] )
+    (add-trigger app [6 2] :overpad synths/overpad)
+    (add-trigger app [6 3] :bing drums/bing)
+    (add-trigger app [6 4] :noise-snare drums/noise-snare)
+    (add-trigger app [6 5] :haziti-clap drums/haziti-clap)
+    ;; (add-trigger app [6 6] )
+    ;; (add-trigger app [6 7] )
+
+    ;; (add-trigger app [7 0] )
+    ;; (add-trigger app [7 1] )
+    ;; (add-trigger app [7 2] )
+    ;; (add-trigger app [7 3] )
+    ;; (add-trigger app [7 4] )
+    ;; (add-trigger app [7 5] )
+    ;; (add-trigger app [7 6] )
+    ;; (add-trigger app [7 7] )
+
+    app))

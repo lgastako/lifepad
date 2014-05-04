@@ -10,3 +10,10 @@
 
 (def ding
   (sample "/Users/john/src/omchaya/assets/audio/ding.wav"))
+
+;; (def tritone
+;;   (sample "/Users/john/src/omchaya/assets/audio/threetone-alert.wav
+;; "))
+
+;; (def pluck1
+;;   (sample "/Users/john/src/cpython-1f3242fb0c9c/Lib/test/audiodata/pluck-pcm16.wav"))

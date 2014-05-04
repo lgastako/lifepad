@@ -9,6 +9,7 @@
             [launchtone.devices :as devices]
             [launchtone.utils :as ltu]
             [lifepad.boards :as boards]
+            [lifepad.sounds :as sounds]
             [lifepad.tools :as tools]))
 
 ;; To capture all logging in your REPL:
@@ -92,7 +93,21 @@
 (defn restore [app]
   (set-board app @captured))
 
-(defn init [& {:keys [receiver board boards speed]
+(defn add-trigger [app spot key action]
+  (swap! app assoc-in [:triggers spot key] action))
+
+;; need dissoc-in
+;; (defn remove-trigger [app spot key]
+;;   (swap! app dissoc-in [:triggers spot key]))
+
+(defn new-actives [o n]
+  (filter #(let [nv (valat (:board n) %)
+                 ov (valat (:board o) %)]
+             (and (= ov :_)
+                  (not= ov nv)))
+          board/all-spots))
+
+(defn init [& {:keys [receiver board boards speed triggers]
                :or {board boards/glider
                     boards (filter (partial not= boards/blank)
                                    (vec boards/all))
@@ -103,8 +118,9 @@
                    :boards boards
                    :index 0
                    :speed speed
-                   :paused false
-                   :stopped false})
+                   :paused true
+                   :stopped false
+                   :triggers triggers})
         changes (chan)]
     (board/render-board! receiver board)
     (board/auto-render receiver :auto app [:board])
@@ -118,6 +134,24 @@
                                        (not= (:paused o) (:paused n))
                                        (not= (:stopped o) (:stopped n)))
                                (put! changes :change))))
+    (add-watch app :triggerer (fn [k r o n]
+                                (log/debug :triggerer :firing)
+                                (when-let [triggers (:triggers @app)]
+                                  (log/debug :triggerer :num-triggered-spots (count triggers))
+                                  (when-let [nas (new-actives o n)]
+                                    (log/debug :triggerer :nas nas)
+                                    (doall
+                                     (for [spot nas]
+                                       (do
+                                         (log/debug :triggerer :for-spot spot)
+                                         (log/debug :triggerer :triggers (triggers spot))
+                                         (when-let [spot-triggers (triggers spot)]
+                                           (log/debug :num-spot-triggers (count spot-triggers))
+                                           (doall
+                                            (for [[_ trigger] spot-triggers]
+                                              (do
+                                                (log/debug :trigger :triggering {:trigger trigger})
+                                                (trigger))))))))))))
     (buttons/on-button :press #(let [old (valat (:board @app) (:spot %))
                                      new (if (= old :y) :_ :y)]
                                  (swap! app update-in [:board] board/assoc-at (:spot %) new)))
@@ -144,3 +178,7 @@
   (log/set-level! :debug)
   (bus/replace-with-printer!)
   (init))
+
+;; delete me
+(defn tmp1 [app]
+  (add-trigger app [0 0] :ding sounds/ding))

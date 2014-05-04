@@ -92,11 +92,13 @@
 (defn restore [app]
   (set-board app @captured))
 
-(defn init [receiver & {:keys [board boards speed]
-                        :or {board boards/glider
-                             boards (vec boards/all)
-                             speed 250}}]
-  (let [app (atom {:receiver receiver
+(defn init [& {:keys [receiver board boards speed]
+               :or {board boards/glider
+                    boards (filter (partial not= boards/blank)
+                                   (vec boards/all))
+                    speed 250}}]
+  (let [receiver (if receiver receiver (second (devices/select)))
+        app (atom {:receiver receiver
                    :board board
                    :boards boards
                    :index 0
@@ -129,14 +131,10 @@
     ;; (buttons/on-control :slower-button #(when (= :down (:control %)) (slower app)))
     app))
 
-(defn- make-app []
-  (let [[_ receiver] (devices/select)]
-    (init receiver)))
-
 (defn -main []
   (log/set-level! :warn)
   (bus/replace-with-printer!)
-  (let [app (make-app)]
+  (let [app (init)]
     (println "Press enter or return to quit.")
     (read-line)
     (stop app)
@@ -145,4 +143,4 @@
 (defn- develop []
   (log/set-level! :debug)
   (bus/replace-with-printer!)
-  (make-app))
+  (init))

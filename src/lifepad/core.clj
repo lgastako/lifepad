@@ -50,6 +50,25 @@
 (defn evolve [board]
   (tools/next-board-by-f board nextval))
 
+(defn pause [app] (swap! app assoc :paused true))
+(defn unpause [app] (swap! app assoc :paused false))
+(defn toggle [app] (swap! app update-in [:paused] not))
+(defn stop [app] (swap! app assoc :stopped true))
+(defn set-speed [app speed] (swap! app assoc :speed speed))
+(defn set-board [app board] (swap! app assoc :board board))
+(defn clear [app] (set-board app boards/blank))
+
+(defn dumpboard [app]
+  (pprint (:board @app)))
+
+(def ^:private captured (atom nil))
+
+(defn capture [app]
+  (reset! captured (:board @app)))
+
+(defn restore [app]
+  (set-board app @captured))
+
 (defn init [receiver & {:keys [board speed]
                         :or {board boards/glider
                              speed 250}}]
@@ -77,26 +96,9 @@
     (buttons/on-button :press #(let [old (valat (:board @app) (:spot %))
                                      new (if (= old :y) :_ :y)]
                                  (swap! app update-in [:board] board/assoc-at (:spot %) new)))
+    (buttons/on-control :pause-button #(when (= :mixer (:control %)) (toggle app)))
+    (buttons/on-control :clear-button #(when (= :session (:control %)) (clear app)))
     app))
-
-(defn pause [app] (swap! app assoc :paused true))
-(defn unpause [app] (swap! app assoc :paused false))
-(defn toggle [app] (swap! app update-in [:paused] not))
-(defn stop [app] (swap! app assoc :stopped true))
-(defn set-speed [app speed] (swap! app assoc :speed speed))
-(defn set-board [app board] (swap! app assoc :board board))
-(defn clear [app] (set-board app boards/blank))
-
-(defn dumpboard [app]
-  (pprint (:board @app)))
-
-(def ^:private captured (atom nil))
-
-(defn capture [app]
-  (reset! captured (:board @app)))
-
-(defn restore [app]
-  (set-board app @captured))
 
 (defn- make-app []
   (let [[_ receiver] (devices/select)]
